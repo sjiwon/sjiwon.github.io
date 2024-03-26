@@ -2,9 +2,11 @@
 
 - type: github
   icon: "fab fa-github"
+  url: "https://github.com/sjiwon"
 
-- type: twitter
-  icon: "fa-brands fa-x-twitter"
+- type: linkedin
+  icon: "fab fa-linkedin"
+  url: "www.linkedin.com/in/sjiwon-dev"
 
 - type: email
   icon: "fas fa-envelope"

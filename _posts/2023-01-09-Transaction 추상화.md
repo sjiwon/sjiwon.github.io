@@ -1,5 +1,5 @@
 ---
-title: Spring Transaction 추상화
+title: Transaction 추상화
 date: 2023-01-09 10:00 +0900
 aliases: null
 tags: [ Spring, Transaction, 트랜잭션 추상화, PlatformTransactionManager, UnexpectedRollbackException ]
@@ -175,7 +175,7 @@ class TransactionHandlingTest(
 ```
 
 <div style="text-align: left">
-  <img src="/assets/img/posts/2023-01-09-Spring%20Transaction%20추상화/img1.png" alt="img"/>
+  <img src="/assets/img/posts/2023-01-09-Transaction%20추상화/img1.png" alt="img"/>
 </div>
 
 JDBC API & JPA 각각 트랜잭션을 다루는 방식에는 눈에 보이는 차이가 존재한다
@@ -191,7 +191,7 @@ Spring에서는 이러한 문제를 어떻게 해결하고 있을까?
 ## PlatformTransactionManager
 
 <div style="text-align: left">
-  <img src="/assets/img/posts/2023-01-09-Spring%20Transaction%20추상화/img2.png" alt="img"/>
+  <img src="/assets/img/posts/2023-01-09-Transaction%20추상화/img2.png" alt="img"/>
 </div>
 
 > 여러 DB 접근 기술의 `트랜잭션 매커니즘`을 추상화시킨 컴포넌트
@@ -201,7 +201,7 @@ Spring에서는 이러한 문제를 어떻게 해결하고 있을까?
 ### getTransaction
 
 <div style="text-align: left">
-  <img src="/assets/img/posts/2023-01-09-Spring%20Transaction%20추상화/img3.png" alt="img"/>
+  <img src="/assets/img/posts/2023-01-09-Transaction%20추상화/img3.png" alt="img"/>
 </div>
 
 > 현재 활성화된 트랜잭션 획득 or 새로운 트랜잭션 생성
@@ -251,7 +251,7 @@ class TransactionDef(
 ```
 
 <div style="text-align: left">
-  <img src="/assets/img/posts/2023-01-09-Spring%20Transaction%20추상화/img4.png" alt="img"/>
+  <img src="/assets/img/posts/2023-01-09-Transaction%20추상화/img4.png" alt="img"/>
 </div>
 
 - writableTx & readOnlyTx 모두 `Propagation = REQUIRED`이므로 열린 트랜잭션에 참여한다
@@ -260,7 +260,7 @@ class TransactionDef(
 ### commit
 
 <div style="text-align: left">
-  <img src="/assets/img/posts/2023-01-09-Spring%20Transaction%20추상화/img5.png" alt="img"/>
+  <img src="/assets/img/posts/2023-01-09-Transaction%20추상화/img5.png" alt="img"/>
 </div>
 
 > 트랜잭션 `커밋`
@@ -273,7 +273,7 @@ commit 시점에 가장 중요한 값은 `TransactionStatus's rollbackOnly`이�
 ### rollback
 
 <div style="text-align: left">
-  <img src="/assets/img/posts/2023-01-09-Spring%20Transaction%20추상화/img6.png" alt="img"/>
+  <img src="/assets/img/posts/2023-01-09-Transaction%20추상화/img6.png" alt="img"/>
 </div>
 
 > 트랜잭션 `롤백`

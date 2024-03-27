@@ -1,5 +1,5 @@
 ---
-title: Spring Transaction 동기화
+title: Transaction 동기화
 date: 2023-01-09 13:00 +0900
 aliases: null
 tags: [ Spring, Transaction, Connection, PlatformTransactionManager, TransactionSynchronizationManager ]
@@ -38,7 +38,7 @@ Spring에서는 이러한 문제를 어떻게 해결하고 있을까?
 > 동일한 Transaction간에 여러 리소스 동기화를 위해서 `임시 보관`해주는 컴포넌트
 
 <div style="text-align: left">
-  <img src="/assets/img/posts/2023-01-09-Spring%20Transaction%20동기화/img1.png" alt="img"/>
+  <img src="/assets/img/posts/2023-01-09-Transaction%20동기화/img1.png" alt="img"/>
 </div>
 
 - `ThreadLocal`을 통해서 쓰레드별로 트랜잭션에 필요한 여러 리소스를 동기화시켜준다
@@ -48,7 +48,7 @@ Spring에서는 이러한 문제를 어떻게 해결하고 있을까?
 #### 1. getTransaction
 
 <div style="text-align: left">
-  <img src="/assets/img/posts/2023-01-09-Spring%20Transaction%20동기화/img2.png" alt="img"/>
+  <img src="/assets/img/posts/2023-01-09-Transaction%20동기화/img2.png" alt="img"/>
 </div>
 
 - PlatformTransactionManager의 `getTransaction`은 새로운 트랜잭션을 생성하거나 기존 트랜잭션에 참여하는 로직을 담고 있다
@@ -57,7 +57,7 @@ Spring에서는 이러한 문제를 어떻게 해결하고 있을까?
 #### 2. doGetTransaction -> getResource
 
 <div style="text-align: left">
-  <img src="/assets/img/posts/2023-01-09-Spring%20Transaction%20동기화/img3.png" alt="img"/>
+  <img src="/assets/img/posts/2023-01-09-Transaction%20동기화/img3.png" alt="img"/>
 </div>
 
 - `doGetTransaction`의 내부에서는 `해당 트랜잭션과 관련된 리소스`들을 TransactionSynchronizationManager에서 가져온다
@@ -68,7 +68,7 @@ Spring에서는 이러한 문제를 어떻게 해결하고 있을까?
 #### 3. 트랜잭션 진행...
 
 <div style="text-align: left">
-  <img src="/assets/img/posts/2023-01-09-Spring%20Transaction%20동기화/img4.png" alt="img"/>
+  <img src="/assets/img/posts/2023-01-09-Transaction%20동기화/img4.png" alt="img"/>
 </div>
 
 - 리소스를 얻은 후 `Transaction Propagation`에 따라 이후 로직들을 진행한다
@@ -76,7 +76,7 @@ Spring에서는 이러한 문제를 어떻게 해결하고 있을까?
 ## Connection 관리 (반납 & 제거)
 
 <div style="text-align: left">
-  <img src="/assets/img/posts/2023-01-09-Spring%20Transaction%20동기화/img5.png" alt="img"/>
+  <img src="/assets/img/posts/2023-01-09-Transaction%20동기화/img5.png" alt="img"/>
 </div>
 
 logicA와 logicB가 하나의 트랜잭션 내부적으로 동일한 Connection을 통해서 DB와 상호작용을 한다고 가정하자
@@ -153,5 +153,5 @@ private void processRollback(DefaultTransactionStatus status, boolean unexpected
 - 두 로직 모두 finally 부분에서 `cleanupAfterCompletion(status)`를 호출한다
 
 <div style="text-align: left">
-  <img src="/assets/img/posts/2023-01-09-Spring%20Transaction%20동기화/img6.png" alt="img"/>
+  <img src="/assets/img/posts/2023-01-09-Transaction%20동기화/img6.png" alt="img"/>
 </div>

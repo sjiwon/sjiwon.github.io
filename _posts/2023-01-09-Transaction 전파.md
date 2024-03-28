@@ -91,6 +91,7 @@ Spring에서도 원한다면 @Transactional의 `rollbackFor, noRollbackFor,...`�
 logging:
   level:
     org.springframework.orm.jpa.JpaTransactionManager: DEBUG
+    org.springframework.jdbc.support.JdbcTransactionManager: DEBUG
     org.hibernate.resource.transaction: DEBUG
 ```
 

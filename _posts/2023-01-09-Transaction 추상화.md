@@ -2,9 +2,16 @@
 title: Transaction 추상화
 date: 2023-01-09 10:00 +0900
 aliases: null
-tags: [ Spring, Transaction, 트랜잭션 추상화, PlatformTransactionManager, UnexpectedRollbackException ]
+tags: 
+  - Spring
+  - Transaction
+  - 트랜잭션 추상화
+  - PlatformTransactionManager
+  - UnexpectedRollbackException
 image: /assets/img/thumbnails/Spring.png
-categories: [ Skill, Spring ]
+categories:
+  - Skill
+  - Spring
 ---
 
 ## 트랜잭션?

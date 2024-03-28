@@ -2,9 +2,16 @@
 title: Transaction 동기화
 date: 2023-01-09 13:00 +0900
 aliases: null
-tags: [ Spring, Transaction, Connection, PlatformTransactionManager, TransactionSynchronizationManager ]
+tags:
+  - Spring
+  - Transaction
+  - Connection
+  - PlatformTransactionManager
+  - TransactionSynchronizationManager
 image: /assets/img/thumbnails/Spring.png
-categories: [ Skill, Spring ]
+categories:
+  - Skill
+  - Spring
 ---
 
 ## Transaction - Connection간의 관계

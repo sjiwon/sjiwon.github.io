@@ -2,9 +2,18 @@
 title: Transaction 전파
 date: 2023-01-09 16:00 +0900
 aliases: null
-tags: [ Spring, Transaction, Connection, PlatformTransactionManager, TransactionSynchronizationManager ]
+tags:
+  - Spring
+  - Transaction
+  - 트랜잭션 전파
+  - Propagation
+  - REQUIRED
+  - REQUIRES_NEW
+  - NestedTransactionNotSupportedException
 image: /assets/img/thumbnails/Spring.png
-categories: [ Skill, Spring ]
+categories:
+  - Skill
+  - Spring
 ---
 
 ## Transaction 전파
@@ -782,4 +791,4 @@ fun `기존 트랜잭션 O - Main(Rollback) & Sub(Commit)`() {
 - 최종 결과는 외부 트랜잭션의 Unchecked Exception으로 인해 Rollback된다
 
 <br>
-> 관련된 코드는 [깃허브](https://github.com/sjiwon/devlog-codes/tree/main/spring-transaction/transaction-propagation)에서 확인할 수 있습니다
+> 관련된 코드는 [깃허브](https://github.com/sjiwon/devlog-codes/tree/main/spring/transaction/propagation)에서 확인할 수 있습니다

@@ -774,7 +774,7 @@ fun `기존 트랜잭션 O - Main(Rollback) & Sub(Commit)`() {
 ```
 
 <div style="text-align: left">
-  <img src="/assets/img/posts/2023-01-09-Transaction%20전파/nested2-jdbc.png" alt="img"/>
+  <img src="/assets/img/posts/2023-01-09-Transaction%20전파/nested3-jdbc.png" alt="img"/>
 </div>
 
 - `JdbcTransactionManager`는 JpaTransactionManager와는 달리 `중첩 트랜잭션 NESTED`를 지원한다

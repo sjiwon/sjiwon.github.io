@@ -33,6 +33,8 @@ fun logic() {
 
 Spring에서는 이러한 문제를 어떻게 해결하고 있을까?
 
+<br>
+
 ## TransactionSynchronizationManager
 
 > 동일한 Transaction간에 여러 리소스 동기화를 위해서 `임시 보관`해주는 컴포넌트
@@ -54,7 +56,7 @@ Spring에서는 이러한 문제를 어떻게 해결하고 있을까?
 - PlatformTransactionManager의 `getTransaction`은 새로운 트랜잭션을 생성하거나 기존 트랜잭션에 참여하는 로직을 담고 있다
 - 이 과정에서 `doGetTransaction()`을 호출한다
 
-#### 2. doGetTransaction -> getResource
+#### 2. doGetTransaction &rarr; getResource
 
 <div style="text-align: left">
   <img src="/assets/img/posts/2023-01-09-Transaction%20동기화/img3.png" alt="img"/>
@@ -72,6 +74,8 @@ Spring에서는 이러한 문제를 어떻게 해결하고 있을까?
 </div>
 
 - 리소스를 얻은 후 `Transaction Propagation`에 따라 이후 로직들을 진행한다
+
+<br>
 
 ## Connection 관리 (반납 & 제거)
 

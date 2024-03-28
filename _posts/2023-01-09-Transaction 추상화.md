@@ -188,6 +188,8 @@ JDBC API & JPA 각각 트랜잭션을 다루는 방식에는 눈에 보이는 �
 
 Spring에서는 이러한 문제를 어떻게 해결하고 있을까?
 
+<br>
+
 ## PlatformTransactionManager
 
 <div style="text-align: left">

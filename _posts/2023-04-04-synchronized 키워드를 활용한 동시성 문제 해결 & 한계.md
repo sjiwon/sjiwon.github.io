@@ -23,8 +23,8 @@ categories:
 - 선착순 쿠폰 동시성 처리
 - ...
 
-동시성 문제는 결국 `멀티 쓰레드 환경`에서 공유 자원이 존재하는 Critical Section에 대한 Race Condition으로 인해 발생하는 문제이다<br>
-본 포스팅에서는 `synchronized`라는 JVM에서 제공해주는 키워드를 통해서 동시성을 제어해보고 한계에 대해서 설명할 예정이다
+동시성 문제는 공유 자원을 동시에 접근하는 과정에서 `Critical Section에서 발생하는 Race Condition`으로 인한 문제를 의미한다<br>
+본 포스팅에서는 `JVM 환경에서 제공하는 synchronized 키워드`를 사용하여 동시성을 제어하고 한계에 대해 설명할 예정이다
 
 ### Process? Thread?
 

@@ -9,7 +9,9 @@ tags:
   - 분산 환경 synchronized
   - Spring Transactional Proxy
   - Nginx Reverse Proxy
+  - Optimistic Lock 
   - Pessimistic Lock
+  - Distributed Lock
 image: /assets/img/thumbnails/Spring.png
 categories:
   - Skill

@@ -275,14 +275,14 @@ class TicketV4Service(
 
 <br>
 
-## 분산환경에서의 synchronized 한계점
+## 분산 환경에서의 synchronized 한계점
 
-synchronized 키워드는 `단일 프로세스` 상에서 특정 Critical Section에 대해서 멀티 쓰레드 동시성 문제를 해결할 수 있다<br>
-하지만 SPOF, 트래픽 부하 분산, ..등 여러가지 이유로 WAS를 분산시켰다면 synchronized가 정상적으로 동작할까?
+synchronized 키워드는 `단 하나의 서버`만 Critical Section에 접근하는 경우 동시성 제어가 가능하다<br>
+하지만 SPOF, 트래픽 부하 분산, ..등 여러가지 이유로 서버 자체를 분산시킨 환경에서도 synchronized는 우리가 원하는대로 동작할까?
 
 ### 실습
 
-간단하게 로컬환경에서 Docker를 활용해서 WAS 2대를 띄운 후 nginx를 통한 로드밸런싱을 적용해서 분산환경에서 synchronized만으로는 동시성 처리가 되지 않는지 확인하자
+간단하게 로컬환경에서 Docker를 활용해서 WAS 2대를 띄운 후 nginx를 통한 로드밸런싱을 적용해서 분산환경에서 synchronized만으로는 동시성 처리가 되지 않는지 확인해보자
 
 #### application.yml & Docker
 
@@ -539,18 +539,30 @@ export default function () {
 
 - 결과로 알 수 있듯이 `분산 환경`에서는 synchronized로 동시성 처리가 되지 않는다
 
-### 분산환경에서 동시성 처리 방법
+### 분산 환경에서의 동시성 제어
 
-분산 환경에서 Race Condition에 대한 Mutual Exclusion을 보장하기 위해서는 다음 조건을 만족해야 한다
-
-- N대의 서버가 `공통적으로 바라보는 공간`에서 락이라는 개념을 관리
+Critical Section을 `단 하나의 서버`에서만 접근하는 경우 synchronized로 해결되지만 `분산된 서버`에서는 해결되지 않는것을 보았다<br>
+따라서 이렇게 분산된 서버에서 Critical Section에 대한 Mutual Exclusion을 보장하기 위해서 사용하는 Lock을 `분산 락(Distributed Lock)`이라고 한다
 
 <br>
-위의 케이스에서는 아래와 같은 방법을 적용할 수 있다
+분산 락의 경우 `락`이라는 개념을 `N대의 서버가 공통적으로 바라보는 공간`에서 제어해야 한다
 
-1. Ticket Record에 직접적인 Lock을 적용해서 관리 (Pessimistic Lock)
-2. Application 레벨에서 Version을 통해서 갱신 시점에 동기화를 관리 (Optimistic Lock)
-3. DB Record가 아닌 별도의 외부 영역에서 락이라는 개념을 관리 (분산락 - MySQL Named Lock, Redis, Zookeeper, ...)
+- 서버를 분산시키고 앞단에 로드밸런서를 두게 되면 들어오는 여러 요청들은 여러 서버로 분산되어서 처리된다
+- 만약 해당 요청이 `공유 자원에 대한 수정`이 일어나는 로직이라면 `여러 서버에서 바라보는 공유 자원에 대한 정합성`이 굉장히 중요해지고 이를 위해서 분산 락을 사용해서 순차적 처리를 유도한다
+
+<br>
+위의 케이스에서는 아래와 같은 방법을 적용할 수 있다 (분산 서버 + 싱글 DB)
+
+1. Ticket Record에 직접적인 Lock을 적용해서 제어 (Pessimistic Lock)
+2. Application 레벨에서 Version을 통해서 갱신 시점에 동기화 (Optimistic Lock)
+3. DB Record가 아닌 별도의 영역에서 Lock이라는 개념을 관리
+   - MySQL Named Lock
+   - Redis
+   - Zookeeper
+   - ...
+
+추가적으로 위의 경우 `이미 존재하는 Ticket Record Entity`에 대해서 재고에 대한 동시성 제어를 하기 때문에 Optimistic or Pessimistic으로 제어가 가능하다<br>
+만약 이미 존재하는 Record Entity가 아니라면 Optimistic or Pessimistic이 아닌 다른 방법으로 앞단에서 제어하는 메커니즘이 필요하다
 
 <br>
 `1) Pessimistic Lock`을 활용해서 실제 동시성 처리가 이루어지는지 간단하게 테스트해보자

@@ -4,13 +4,16 @@ date: 2023-10-25 13:00 +0900
 aliases: null
 tags:
   - Spring
-  - Spring AOP 로그
+  - Spring AOP 로깅
   - MDC
-  - Logback
-  - ContentCachingRequesetWrapper
-  - ContentCachingResponseWrapper
   - ThreadLocal
+  - ContentCachingRequestWrapper
+  - ContentCachingResponseWrapper
   - Filter Interceptor
+  - Logback
+  - TaskDecorator
+  - Async Event 로깅
+  - 비동기 로깅
 image: /assets/img/thumbnails/Spring.png
 categories:
   - Skill

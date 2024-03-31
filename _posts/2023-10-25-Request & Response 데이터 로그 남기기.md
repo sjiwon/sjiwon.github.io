@@ -221,7 +221,7 @@ enum class MdcKey {
     START_TIME_MILLIS,
 }
 
-class MdcLoggingFilter : Filter {
+class CachingMdcFilter : Filter {
     override fun doFilter(
         request: ServletRequest,
         response: ServletResponse,
@@ -418,7 +418,7 @@ fun response(@RequestBody data: Data): Data {
 이를 활용해서 요청 & 응답 데이터를 캐싱하는 Filter를 구현해보자
 
 ```kotlin
-class RequestResponseCachingFilter : OncePerRequestFilter() {
+class CachingDataFilter : OncePerRequestFilter() {
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -450,20 +450,20 @@ ContentCachingRequestWrapper에서 caching되는 stream data를 읽기 위해서
 <br>
 현재 구현하고자 하는 로깅 구조는 다음과 같다
 
-1. Filter에서 MdcKey 기반 MDC Map 설정 - MdcLoggingFilter
-2. Filter에서 요청 데이터 캐싱 - RequestResponseCachingFilter
-3. Filter's doFilter에서 Request 데이터 로깅 - RequestLoggingFilter
+1. Filter에서 MdcKey 기반 MDC Map 설정 - CachingMdcFilter
+2. Filter에서 요청 데이터 캐싱 - CachingDataFilter
+3. Filter's doFilter에서 Request 데이터 로깅 - LoggingDataFilter
 4. ...
 5. ArgumentResolver에서 @RequestBody를 활용한 데이터 바인딩
 6. ...
-7. Filter에서 응답 데이터 캐싱 - RequestResponseCachingFilter
-8. Filter's doFilter에서 Response 데이터 로깅 - RequestLoggingFilter
+7. Filter에서 응답 데이터 캐싱 - CachingDataFilter
+8. Filter's doFilter에서 Response 데이터 로깅 - LoggingDataFilter
 
 <br>
-이러한 과정에서 Request 데이터를 로깅하는 것은 아래와 같은 2가지 점으로 인해 불가능하다
+이러한 과정에서 Request 데이터를 로깅하는 것은 아래와 같은 이유로 불가능하다
 
 1. 캐싱없이 읽음 = ArgumentResolver에서 `Stream closed`로 인해 데이터 바인딩 실패
-2. 캐싱 적용 = RequestResponseCachingFilter의 `ContentCachingRequestWrapper`은 이전에 최소 1번은 읽어야 캐싱되는데 여기서 처음 읽으니까 캐싱 불가능
+2. 캐싱 적용 = CachingDataFilter의 `ContentCachingRequestWrapper`은 이전에 최소 1번은 읽어야 캐싱되는데 여기서 처음 읽으니까 캐싱 불가능
 
 <br>
 간단한 테스트를 통해서 최소 1번은 읽혀야 실제로 캐싱되는지 확인해보자
@@ -564,7 +564,7 @@ class ReadableRequestWrapper(
     }
 }
 
-class RequestResponseCachingFilter : OncePerRequestFilter() {
+class CachingDataFilter : OncePerRequestFilter() {
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -633,7 +633,7 @@ fun cachingV2(
 ## 4. Request & Response 데이터 로깅 Filter
 
 ```kotlin
-class RequestLoggingFilter(
+class LoggingDataFilter(
     private val loggingStatusManager: LoggingStatusManager,
     vararg ignoredUrls: String,
 ) : Filter {
@@ -753,31 +753,31 @@ class RequestLoggingFilter(
 @Configuration
 class WebLogConfig {
     @Bean
-    fun firstFilter(): FilterRegistrationBean<MdcLoggingFilter> {
-        return FilterRegistrationBean<MdcLoggingFilter>().apply {
+    fun firstFilter(): FilterRegistrationBean<CachingMdcFilter> {
+        return FilterRegistrationBean<CachingMdcFilter>().apply {
             order = 1
-            filter = MdcLoggingFilter()
-            setName("mdcLoggingFilter")
+            filter = CachingMdcFilter()
+            setName("cachingMdcFilter")
             addUrlPatterns("/api/*")
         }
     }
 
     @Bean
-    fun secondFilter(): FilterRegistrationBean<RequestResponseCachingFilter> {
-        return FilterRegistrationBean<RequestResponseCachingFilter>().apply {
+    fun secondFilter(): FilterRegistrationBean<CachingDataFilter> {
+        return FilterRegistrationBean<CachingDataFilter>().apply {
             order = 2
-            filter = RequestResponseCachingFilter()
-            setName("requestResponseCachingFilter")
+            filter = CachingDataFilter()
+            setName("cachingDataFilter")
             addUrlPatterns("/api/*")
         }
     }
 
     @Bean
-    fun thirdFilter(loggingStatusManager: LoggingStatusManager): FilterRegistrationBean<RequestLoggingFilter> {
-        return FilterRegistrationBean<RequestLoggingFilter>().apply {
+    fun thirdFilter(loggingStatusManager: LoggingStatusManager): FilterRegistrationBean<LoggingDataFilter> {
+        return FilterRegistrationBean<LoggingDataFilter>().apply {
             order = 3
-            filter = RequestLoggingFilter(loggingStatusManager, *ignoredUrl)
-            setName("requestLoggingFilter")
+            filter = LoggingDataFilter(loggingStatusManager, *ignoredUrl)
+            setName("loggingDataFilter")
             addUrlPatterns("/api/*")
         }
     }
@@ -904,16 +904,16 @@ class MemoryBookRepository : BookRepository {
 ```
 
 ```text
-[2024-03-30 16:47:37.505] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.RequestLoggingFilter] [1d43260b-8bbd-4e30-919e-74fa614b829e] [Request START] = [Task ID = 1d43260b-8bbd-4e30-919e-74fa614b829e, IP = 0:0:0:0:0:0:0:1, HTTP Method = POST, Uri = /api/v1/books, Params = [], 요청 시작 시간 = 2024-03-30T16:47:37.500111] 
-[2024-03-30 16:47:37.507] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.RequestLoggingFilter] [1d43260b-8bbd-4e30-919e-74fa614b829e] Request Body = {"name": "Spring"} 
+[2024-03-30 16:47:37.505] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.LoggingDataFilter] [1d43260b-8bbd-4e30-919e-74fa614b829e] [Request START] = [Task ID = 1d43260b-8bbd-4e30-919e-74fa614b829e, IP = 0:0:0:0:0:0:0:1, HTTP Method = POST, Uri = /api/v1/books, Params = [], 요청 시작 시간 = 2024-03-30T16:47:37.500111] 
+[2024-03-30 16:47:37.507] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.LoggingDataFilter] [1d43260b-8bbd-4e30-919e-74fa614b829e] Request Body = {"name": "Spring"} 
 [2024-03-30 16:47:37.669] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.l.LoggingTracer] [1d43260b-8bbd-4e30-919e-74fa614b829e] |--->BookApi.save(..) args=[Request(name=Spring)] 
 [2024-03-30 16:47:37.669] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.l.LoggingTracer] [1d43260b-8bbd-4e30-919e-74fa614b829e] |    |--->BookService.save(..) args=[Spring] 
 [2024-03-30 16:47:37.669] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.l.LoggingTracer] [1d43260b-8bbd-4e30-919e-74fa614b829e] |    |    |--->MemoryBookRepository.save(..) args=[Book(id=0, name=Spring)] 
 [2024-03-30 16:47:37.671] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.l.LoggingTracer] [1d43260b-8bbd-4e30-919e-74fa614b829e] |    |    |<---MemoryBookRepository.save(..) time=166ms 
 [2024-03-30 16:47:37.671] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.l.LoggingTracer] [1d43260b-8bbd-4e30-919e-74fa614b829e] |    |<---BookService.save(..) time=166ms 
 [2024-03-30 16:47:37.671] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.l.LoggingTracer] [1d43260b-8bbd-4e30-919e-74fa614b829e] |<---BookApi.save(..) time=166ms 
-[2024-03-30 16:47:37.704] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.RequestLoggingFilter] [1d43260b-8bbd-4e30-919e-74fa614b829e] Response Body = {"id":1,"name":"Spring"} 
-[2024-03-30 16:47:37.704] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.RequestLoggingFilter] [1d43260b-8bbd-4e30-919e-74fa614b829e] [Request END] = [Task ID = 1d43260b-8bbd-4e30-919e-74fa614b829e, IP = 0:0:0:0:0:0:0:1, HTTP Method = POST, Uri = /api/v1/books, HTTP Status = 200, 요청 처리 시간 = 198ms] 
+[2024-03-30 16:47:37.704] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.LoggingDataFilter] [1d43260b-8bbd-4e30-919e-74fa614b829e] Response Body = {"id":1,"name":"Spring"} 
+[2024-03-30 16:47:37.704] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.LoggingDataFilter] [1d43260b-8bbd-4e30-919e-74fa614b829e] [Request END] = [Task ID = 1d43260b-8bbd-4e30-919e-74fa614b829e, IP = 0:0:0:0:0:0:0:1, HTTP Method = POST, Uri = /api/v1/books, HTTP Status = 200, 요청 처리 시간 = 198ms] 
 ```
 
 - 성공적으로 전역적인 Request & Response 데이터 + 컴포넌트 호출 구조를 로깅할 수 있다
@@ -970,26 +970,26 @@ class EventHandler {
 
 ```text
 // @Async
-[2024-03-30 17:03:14.473] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.RequestLoggingFilter] [1b30f0bb-ba49-413c-ada6-0fabea70a2ea] [Request START] = [Task ID = 1b30f0bb-ba49-413c-ada6-0fabea70a2ea, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/async, Params = [], 요청 시작 시간 = 2024-03-30T17:03:14.467496200] 
-[2024-03-30 17:03:14.474] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.RequestLoggingFilter] [1b30f0bb-ba49-413c-ada6-0fabea70a2ea] Request Body = { Empty } 
+[2024-03-30 17:03:14.473] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.LoggingDataFilter] [1b30f0bb-ba49-413c-ada6-0fabea70a2ea] [Request START] = [Task ID = 1b30f0bb-ba49-413c-ada6-0fabea70a2ea, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/async, Params = [], 요청 시작 시간 = 2024-03-30T17:03:14.467496200] 
+[2024-03-30 17:03:14.474] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.LoggingDataFilter] [1b30f0bb-ba49-413c-ada6-0fabea70a2ea] Request Body = { Empty } 
 [2024-03-30 17:03:14.500] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.l.LoggingTracer] [1b30f0bb-ba49-413c-ada6-0fabea70a2ea] |--->HelloApi.async() args=[] 
 [2024-03-30 17:03:14.502] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.l.LoggingTracer] [1b30f0bb-ba49-413c-ada6-0fabea70a2ea] |<---HelloApi.async() time=29ms 
 [2024-03-30 17:03:14.502] [INFO ] [task-1] [c.s.l.g.l.LoggingTracer] [NO REQUEST ID] |--->HelloService.async() args=[] 
 [2024-03-30 17:03:14.503] [INFO ] [task-1] [c.s.l.g.l.LoggingTracer] [NO REQUEST ID] |<---HelloService.async() time=1ms 
-[2024-03-30 17:03:14.516] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.RequestLoggingFilter] [1b30f0bb-ba49-413c-ada6-0fabea70a2ea] Response Body = ok 
-[2024-03-30 17:03:14.516] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.RequestLoggingFilter] [1b30f0bb-ba49-413c-ada6-0fabea70a2ea] [Request END] = [Task ID = 1b30f0bb-ba49-413c-ada6-0fabea70a2ea, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/async, HTTP Status = 200, 요청 처리 시간 = 42ms] 
+[2024-03-30 17:03:14.516] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.LoggingDataFilter] [1b30f0bb-ba49-413c-ada6-0fabea70a2ea] Response Body = ok 
+[2024-03-30 17:03:14.516] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.LoggingDataFilter] [1b30f0bb-ba49-413c-ada6-0fabea70a2ea] [Request END] = [Task ID = 1b30f0bb-ba49-413c-ada6-0fabea70a2ea, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/async, HTTP Status = 200, 요청 처리 시간 = 42ms] 
 
 // ApplicationEventPublisher
-[2024-03-30 17:04:26.409] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.RequestLoggingFilter] [d6d5104c-df73-49f5-81c7-657ab813f7af] [Request START] = [Task ID = d6d5104c-df73-49f5-81c7-657ab813f7af, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/event, Params = [], 요청 시작 시간 = 2024-03-30T17:04:26.394100900] 
-[2024-03-30 17:04:26.417] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.RequestLoggingFilter] [d6d5104c-df73-49f5-81c7-657ab813f7af] Request Body = { Empty } 
+[2024-03-30 17:04:26.409] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.LoggingDataFilter] [d6d5104c-df73-49f5-81c7-657ab813f7af] [Request START] = [Task ID = d6d5104c-df73-49f5-81c7-657ab813f7af, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/event, Params = [], 요청 시작 시간 = 2024-03-30T17:04:26.394100900] 
+[2024-03-30 17:04:26.417] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.LoggingDataFilter] [d6d5104c-df73-49f5-81c7-657ab813f7af] Request Body = { Empty } 
 [2024-03-30 17:04:26.481] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.l.LoggingTracer] [d6d5104c-df73-49f5-81c7-657ab813f7af] |--->HelloApi.event() args=[] 
 [2024-03-30 17:04:26.488] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.l.LoggingTracer] [d6d5104c-df73-49f5-81c7-657ab813f7af] |    |--->HelloService.event() args=[] 
 [2024-03-30 17:04:26.488] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.l.LoggingTracer] [d6d5104c-df73-49f5-81c7-657ab813f7af] |    |<---HelloService.event() time=79ms 
 [2024-03-30 17:04:26.488] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.l.LoggingTracer] [d6d5104c-df73-49f5-81c7-657ab813f7af] |<---HelloApi.event() time=79ms 
 [2024-03-30 17:04:26.488] [INFO ] [task-1] [c.s.l.g.l.LoggingTracer] [NO REQUEST ID] |--->EventHandler.execute(..) args=[HelloEvent(id=1)] 
 [2024-03-30 17:04:26.488] [INFO ] [task-1] [c.s.l.g.l.LoggingTracer] [NO REQUEST ID] |<---EventHandler.execute(..) time=0ms 
-[2024-03-30 17:04:26.521] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.RequestLoggingFilter] [d6d5104c-df73-49f5-81c7-657ab813f7af] Response Body = ok 
-[2024-03-30 17:04:26.521] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.RequestLoggingFilter] [d6d5104c-df73-49f5-81c7-657ab813f7af] [Request END] = [Task ID = d6d5104c-df73-49f5-81c7-657ab813f7af, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/event, HTTP Status = 200, 요청 처리 시간 = 114ms] 
+[2024-03-30 17:04:26.521] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.LoggingDataFilter] [d6d5104c-df73-49f5-81c7-657ab813f7af] Response Body = ok 
+[2024-03-30 17:04:26.521] [INFO ] [http-nio-8080-exec-1] [c.s.l.g.f.LoggingDataFilter] [d6d5104c-df73-49f5-81c7-657ab813f7af] [Request END] = [Task ID = d6d5104c-df73-49f5-81c7-657ab813f7af, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/event, HTTP Status = 200, 요청 처리 시간 = 114ms] 
 ```
 
 - 로깅 결과로 알 수 있듯이 현재 구조에서 `비동기 처리`는 동일한 문맥을 제공해주지 않는다
@@ -1049,26 +1049,26 @@ class AsyncConfig : AsyncConfigurer {
 
 ```text
 // Async
-[2024-03-30 17:13:21.994] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.RequestLoggingFilter] [f42c476a-f9dc-4cba-b73f-0759b1680843] [Request START] = [Task ID = f42c476a-f9dc-4cba-b73f-0759b1680843, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/async, Params = [], 요청 시작 시간 = 2024-03-30T17:13:21.989088400] 
-[2024-03-30 17:13:21.996] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.RequestLoggingFilter] [f42c476a-f9dc-4cba-b73f-0759b1680843] Request Body = { Empty } 
+[2024-03-30 17:13:21.994] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.LoggingDataFilter] [f42c476a-f9dc-4cba-b73f-0759b1680843] [Request START] = [Task ID = f42c476a-f9dc-4cba-b73f-0759b1680843, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/async, Params = [], 요청 시작 시간 = 2024-03-30T17:13:21.989088400] 
+[2024-03-30 17:13:21.996] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.LoggingDataFilter] [f42c476a-f9dc-4cba-b73f-0759b1680843] Request Body = { Empty } 
 [2024-03-30 17:13:22.020] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.l.LoggingTracer] [f42c476a-f9dc-4cba-b73f-0759b1680843] |--->HelloApi.async() args=[] 
 [2024-03-30 17:13:22.024] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.l.LoggingTracer] [f42c476a-f9dc-4cba-b73f-0759b1680843] |<---HelloApi.async() time=30ms 
 [2024-03-30 17:13:22.025] [INFO ] [Asynchronous Thread-1] [c.s.l.g.l.LoggingTracer] [f42c476a-f9dc-4cba-b73f-0759b1680843] |--->HelloService.async() args=[] 
 [2024-03-30 17:13:22.025] [INFO ] [Asynchronous Thread-1] [c.s.l.g.l.LoggingTracer] [f42c476a-f9dc-4cba-b73f-0759b1680843] |<---HelloService.async() time=0ms 
-[2024-03-30 17:13:22.040] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.RequestLoggingFilter] [f42c476a-f9dc-4cba-b73f-0759b1680843] Response Body = ok 
-[2024-03-30 17:13:22.040] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.RequestLoggingFilter] [f42c476a-f9dc-4cba-b73f-0759b1680843] [Request END] = [Task ID = f42c476a-f9dc-4cba-b73f-0759b1680843, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/async, HTTP Status = 200, 요청 처리 시간 = 45ms] 
+[2024-03-30 17:13:22.040] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.LoggingDataFilter] [f42c476a-f9dc-4cba-b73f-0759b1680843] Response Body = ok 
+[2024-03-30 17:13:22.040] [INFO ] [http-nio-8080-exec-3] [c.s.l.g.f.LoggingDataFilter] [f42c476a-f9dc-4cba-b73f-0759b1680843] [Request END] = [Task ID = f42c476a-f9dc-4cba-b73f-0759b1680843, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/async, HTTP Status = 200, 요청 처리 시간 = 45ms] 
 
 // ApplicationEventPublisher
-[2024-03-30 17:13:58.393] [INFO ] [http-nio-8080-exec-2] [c.s.l.g.f.RequestLoggingFilter] [4032ccc5-8968-4314-9515-4150de7b53dc] [Request START] = [Task ID = 4032ccc5-8968-4314-9515-4150de7b53dc, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/event, Params = [], 요청 시작 시간 = 2024-03-30T17:13:58.393071100] 
-[2024-03-30 17:13:58.393] [INFO ] [http-nio-8080-exec-2] [c.s.l.g.f.RequestLoggingFilter] [4032ccc5-8968-4314-9515-4150de7b53dc] Request Body = { Empty } 
+[2024-03-30 17:13:58.393] [INFO ] [http-nio-8080-exec-2] [c.s.l.g.f.LoggingDataFilter] [4032ccc5-8968-4314-9515-4150de7b53dc] [Request START] = [Task ID = 4032ccc5-8968-4314-9515-4150de7b53dc, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/event, Params = [], 요청 시작 시간 = 2024-03-30T17:13:58.393071100] 
+[2024-03-30 17:13:58.393] [INFO ] [http-nio-8080-exec-2] [c.s.l.g.f.LoggingDataFilter] [4032ccc5-8968-4314-9515-4150de7b53dc] Request Body = { Empty } 
 [2024-03-30 17:13:58.394] [INFO ] [http-nio-8080-exec-2] [c.s.l.g.l.LoggingTracer] [4032ccc5-8968-4314-9515-4150de7b53dc] |--->HelloApi.event() args=[] 
 [2024-03-30 17:13:58.394] [INFO ] [http-nio-8080-exec-2] [c.s.l.g.l.LoggingTracer] [4032ccc5-8968-4314-9515-4150de7b53dc] |    |--->HelloService.event() args=[] 
 [2024-03-30 17:13:58.395] [INFO ] [http-nio-8080-exec-2] [c.s.l.g.l.LoggingTracer] [4032ccc5-8968-4314-9515-4150de7b53dc] |    |<---HelloService.event() time=2ms 
 [2024-03-30 17:13:58.395] [INFO ] [http-nio-8080-exec-2] [c.s.l.g.l.LoggingTracer] [4032ccc5-8968-4314-9515-4150de7b53dc] |<---HelloApi.event() time=2ms 
 [2024-03-30 17:13:58.395] [INFO ] [Asynchronous Thread-2] [c.s.l.g.l.LoggingTracer] [4032ccc5-8968-4314-9515-4150de7b53dc] |--->EventHandler.execute(..) args=[HelloEvent(id=1)] 
 [2024-03-30 17:13:58.395] [INFO ] [Asynchronous Thread-2] [c.s.l.g.l.LoggingTracer] [4032ccc5-8968-4314-9515-4150de7b53dc] |<---EventHandler.execute(..) time=0ms 
-[2024-03-30 17:13:58.396] [INFO ] [http-nio-8080-exec-2] [c.s.l.g.f.RequestLoggingFilter] [4032ccc5-8968-4314-9515-4150de7b53dc] Response Body = ok 
-[2024-03-30 17:13:58.397] [INFO ] [http-nio-8080-exec-2] [c.s.l.g.f.RequestLoggingFilter] [4032ccc5-8968-4314-9515-4150de7b53dc] [Request END] = [Task ID = 4032ccc5-8968-4314-9515-4150de7b53dc, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/event, HTTP Status = 200, 요청 처리 시간 = 3ms] 
+[2024-03-30 17:13:58.396] [INFO ] [http-nio-8080-exec-2] [c.s.l.g.f.LoggingDataFilter] [4032ccc5-8968-4314-9515-4150de7b53dc] Response Body = ok 
+[2024-03-30 17:13:58.397] [INFO ] [http-nio-8080-exec-2] [c.s.l.g.f.LoggingDataFilter] [4032ccc5-8968-4314-9515-4150de7b53dc] [Request END] = [Task ID = 4032ccc5-8968-4314-9515-4150de7b53dc, IP = 0:0:0:0:0:0:0:1, HTTP Method = GET, Uri = /api/v1/event, HTTP Status = 200, 요청 처리 시간 = 3ms] 
 ```
 
 - 비동기 처리에서도 성공적으로 MDC 문맥을 유지하고 로깅을 진행할 수 있게 되었다

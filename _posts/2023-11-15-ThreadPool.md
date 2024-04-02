@@ -496,7 +496,7 @@ executor.scheduleAtFixedRate(
 - 처음 실행 = initialDelay(3초) + Thread.sleep(1000) = 4초 후
 - 그 다음 실행 = Delay(2초) 간격
 
-### scheduleWithFixedDaly
+### scheduleWithFixedDelay
 
 <div style="text-align: left">
   <img src="/assets/img/posts/2023-11-15-ThreadPool/img22.png" alt="img"/>

@@ -234,6 +234,7 @@ HikariPool 초기화 마지막 단계로써 <span style="color:red">minimumIdle�
 </div>
 
 > 전체 Connection을 보관하는 <span style="color:red">sharedList에서 사용 가능한 Connection을 찾아보고</span> 만약 있다면 대기자들도 체크하고 가져온다
+> - waiter가 본인말고 추가로 존재한다면 Connection 생성을 위해 `addConnectionExecutor`에 Task(Connection 생성 - poolEntryCreator)를 Submit한다
 {: .prompt-info }
 
 <br>

@@ -658,7 +658,7 @@ public class StaticFields {
 
 #### 1. Permanent Generation (PermGen)
 
-PermGen은 `자바 8부터 없어진 영역`이고 JVM Non-Heap Area에 위치한다<br>
+PermGen은 `자바 8부터 없어진 영역`이고 JVM Non-Heap Area에 위치했다<br>
 PermGen은 아래와 같은 데이터를 관리한다
 
 - 클래스 메타데이터 (클래스 이름, 변수, 메소드, ...)
@@ -674,7 +674,7 @@ PermGen은 아래와 같은 데이터를 관리한다
 ##### 1) 고정된 크기
 
 PermGen 영역의 크기는 `JVM이 시작되는 시점`에 설정되고 변경되지 않는 값이다<br>
-따라서 이러한 고정된 크기로 인해 `동적으로 많은 클래스를 로딩`하게 되면 OOM(OutOfMemory)가 자주 발생하게 되었다
+따라서 이러한 고정된 크기로 인해 `동적으로 많은 클래스를 로딩`하게 되면 OOM(OutOfMemory)이 자주 발생하게 되었다
 
 - `java.lang.OutOfMemoryError: PermGen space`
 
@@ -683,7 +683,7 @@ PermGen 영역의 크기는 `JVM이 시작되는 시점`에 설정되고 변경�
 PermGen은 위에서 말했듯이 (클래스 메타데이터, 변수, 상수, ..)등의 데이터들을 관리하고 대부분 애플리케이션의 생명주기 동안 지속적으로 참조되기 때문에, 가비지 컬렉션(GC)에 의해 회수될 가능성이 상대적으로 적다<br>
 따라서 대부분의 데이터가 계속해서 사용되는 PermGen 영역의 특성이 GC의 효율성을 저하시키고, 결국 메모리 부족 문제로 이어질 수 있다
 
-- 결국 `고정된 크기`라는 부분이 크리티컬한 문제
+- `고정된 크기`라는 부분이 크리티컬한 문제
 
 #### 2. Metaspace
 

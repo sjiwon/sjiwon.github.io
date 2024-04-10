@@ -124,7 +124,7 @@ release() {
 
 ##### ***2)️ Priority Inversion***
 
-예시 시나리오를 살펴보자 (우선순위 높은 ThreadA & 우선순위 낮은 ThreadB)
+예시 시나리오를 살펴보자 (우선순위 높은 ThreadA & 우선순위 낮은 ThreadB + Preemption Scheduling)
 
 1. ThreadB가 로직을 실행하면서 공유 자원에 접근하기 위해서 Mutex Lock을 획득했다
 2. 이후 ThreadA도 로직을 실행하면서 동일한 Mutex Lock을 획득하려고 시도한다

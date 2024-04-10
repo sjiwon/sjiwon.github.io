@@ -39,7 +39,7 @@ QueryDsl은 <span style="color:red">Type-Safe</span>하게 JPQL을 작성할 수
    - DB Vendor별로 존재하는 Specific Function들을 Dialect 구현체마다 등록해서 사용한다는 점 자체가 번거롭다
 3. From SubQuery 
    - Hibernate에서는 [Version 6.1](https://in.relation.to/2022/06/24/hibernate-orm-61-features/)부터 From절 SubQuery를 지원한다 
-   - 하지만 QueryDsl은 오픈소스 업데이트가 적극적으로 진행되지 않고 있고 그에 따라서 From절 SubQuery는 아직 지원하지 않는것으로 파악왼다
+   - 하지만 QueryDsl은 오픈소스 업데이트가 적극적으로 진행되지 않고 있고 그에 따라서 From절 SubQuery는 아직 지원하지 않는것으로 파악된다
 
 <br>
 가장 핵심적으로 살펴볼 점은 QueryDsl이 사실상 방치된 오픈소스라는 것이다

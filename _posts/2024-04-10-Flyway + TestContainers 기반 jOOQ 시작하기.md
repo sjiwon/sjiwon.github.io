@@ -425,38 +425,47 @@ class QueryDslRepository(
 
 ```kotlin
 @Repository
-class QueryDslRepository(
-    private val query: JPAQueryFactory,
+class JdslRepository(
+    private val em: EntityManager,
+    private val context: JpqlRenderContext,
 ) : QueryRepository {
     override fun fetchParticipatedFilms(name: String): List<ParticipatedFilm> {
-        return query.select(
-            QParticipatedFilm(
-                film.id,
-                film.title,
-                film.releaseDate,
-                filmActor.role
+        val query: SelectQuery<ParticipatedFilm> = jpql {
+            selectNew<ParticipatedFilm>(
+                path(Film::id),
+                path(Film::title),
+                path(Film::releaseDate),
+                path(FilmActor::role),
+            ).from(
+                entity(FilmActor::class),
+                innerJoin(Actor::class).on(path(Actor::id).equal(path(FilmActor::actorId))),
+                innerJoin(Film::class).on(path(Film::id).equal(path(FilmActor::filmId)))
+            ).where(
+                path(Actor::name).equal(name),
+            ).orderBy(
+                path(Film::releaseDate).asc(),
             )
-        ).from(filmActor)
-            .innerJoin(actor).on(actor.id.eq(filmActor.actorId))
-            .innerJoin(film).on(film.id.eq(filmActor.filmId))
-            .where(actor.name.eq(name))
-            .orderBy(film.releaseDate.asc())
-            .fetch()
+        }
+        return em.createQuery(query, context).resultList
     }
 
     override fun fetchParticipatedActors(title: String): List<ParticipatedActor> {
-        return query.select(
-            QParticipatedActor(
-                actor.id,
-                actor.name,
-                filmActor.role
+        val query: SelectQuery<ParticipatedActor> = jpql {
+            selectNew<ParticipatedActor>(
+                path(Actor::id),
+                path(Actor::name),
+                path(FilmActor::role),
+            ).from(
+                entity(FilmActor::class),
+                innerJoin(Actor::class).on(path(Actor::id).equal(path(FilmActor::actorId))),
+                innerJoin(Film::class).on(path(Film::id).equal(path(FilmActor::filmId)))
+            ).where(
+                path(Film::title).equal(title),
+            ).orderBy(
+                path(Actor::name).asc(),
             )
-        ).from(filmActor)
-            .innerJoin(actor).on(actor.id.eq(filmActor.actorId))
-            .innerJoin(film).on(film.id.eq(filmActor.filmId))
-            .where(film.title.eq(title))
-            .orderBy(actor.name.asc())
-            .fetch()
+        }
+        return em.createQuery(query, context).resultList
     }
 }
 ```

@@ -120,7 +120,7 @@ ALTER TABLE film_actor
   <img src="/assets/img/posts/2024-04-10-Flyway%20+%20TestContainers%20기반%20jOOQ%20시작하기/img1.png" alt="img"/>
 </div>
 
-### 2. Gradle
+### 2. Gradle (build.gradle.kts)
 
 Gradle 기반 `jOOQ & QueryDsl Model`을 생성해보자
 
